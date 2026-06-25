@@ -1,69 +1,59 @@
-# OnSSET GIS extraction
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/babakkhavari/Clustering)
 
-Jupyter notebook facilitated for extracting GIS data and generating the input file necessary for OnSSET. The notebook can be utilized when generating an OnSSET input file from scratch or when the user wants to change one specific dataset in an existing OnSSET-input file. The mandatory datasets are:
-* Administrative boundaries
-* Land Cover
-* Elevation
-* Slope
-* Global horizontal irradiation
-* Travel time
-* Wind velocity
-* Clusters (**Note** The clusters have to include the name of the study area, the amount of nighttime lights, population, population living in areas with nighttime light and an ID column)
+## What this module does
 
-Optional datasets that can be used for the extraction are: 
+This repository contains the source code to extract geospatial data required for the least-cost electrification analysis using the OnSSET tool for every settlement in the country.
 
-* Custom Demand - A layer that can be created by the users themselves. For the first round of GEP the methodlogy described here has been used.
-* Substations
-* Transformers
-* Mini/Small hydro
-* Existing and planned HV-lines
-* Existing and planned MV-lines
-* Road network
+## Installation
 
-The output is in the form of a CSV file that can be directly put into OnSSET.
-
-## Content
-This repository contains:
-* An environment .yml file needed for generating a fully functioning python 3.7 environment necessary for the clustering algorithm.
-* The clustering code and related functions. These files also have instructions for how to run the code
-* An example case for Benin containing inputs and outputs
-
-## Installing and running the extraction notebook
-
-**Requirements**
-
-The extraction module (as well as all supporting scripts in this repo) have been developed in Python 3. You are recommended to install [Anaconda's free distribution](https://www.anaconda.com/distribution/) as suited for your operating system. 
-
-**Install the extraction repository from GitHub**
-
-After installing Anaconda you can download the repository directly or clone it to your designated local directory using:
+The extraction module (as well as all supporting scripts in this repo) have been developed in Python 3. We recommend installing [Anaconda's free distribution](https://www.anaconda.com/distribution/) as suited for your operating system. In order to be able to run the clustering tool you have to install all necessary packages contained in "moz_onsset_env.yml". To do this, simply open Anaconda prompt and browse to the code directory on your computer and run:
 
 ```
-> conda install git
-> git clone https://github.com/OnSSET/OnSSET_GIS_Extraction_notebook.git
-```
-Once installed, open anaconda prompt and move to your local "OnSSET-GIS-Extraction" directory using:
-```
-> cd ..\OnSSET-GIS-Extraction
+conda env create --name moz_onsset_env --file moz_onsset_env.yml
 ```
 
-In order to be able to run the tool (main.ipynb and funcs.ipynb) you have to install all necessary packages. "full_project.yml" contains all of these and can be easily set up by creating a new virtual environment using:
+## How to run
 
-```
-conda env create --name OnSSET_extraction --file full_project.yml
-```
+1. Download input data to data/inputs (see paths in **Input data** section below)
+2. Install the required packages (see installation instructions using Anaconda above)
+3. Activate the environment in Anaconda prompt (*conda activate moz_onsset_env*)
+4. Launch Jupyter Notebook (*jupyter notebook* in Anaconda Prompt)
+5. Open *notebooks/clustering.ipynb* and follow the instructions inside
+6. Outputs will be written to data/outputs
 
-This might take some time. When complete, activate the virtual environment using:
+## Input data
 
-```
-conda activate OnSSET_extraction
-```
+| Dataset | Target location | Description | SDI Location | Alternative location |
+|---------|-----------------|-------------|--------------|----|
+| Population raster | data/iputs/pop | 100 m population counts in raster format (e.g. .tif) | /datasets/rasterfile/13 | https://wopr.worldpop.org/?MOZ/Population/ (*Gridded population estimates (~100m) for Mozambique* version 2.0)|
+| Administrative boundaries | data/inputs/admin_boundaries | Administrative boundaries of Mozambique in polygon format | /datasets/vectorfile/46 | - | 
 
-With the environment activated, you can now move to the extraction directory and start a "jupyter notebook" session by simply typing:
+## Output data
 
-```
-..\OnSSET-GIS-Extraction> jupyter notebook 
-```
-## Changelog
-**21-Februray-2021**: Original code base published
+Output data is a vector file of settlement polygons including population estimates, saved as a geoparquet (*clusters.parquet*) in data/outputs:
+
+| Column | Description | Units |
+| - | - | - |
+| id | Unique id of each settlement | - |
+| Country | Name of the country | - |
+| Area | Area of each settlement | Sq. km |
+| Population | Estimated population in each settlement | People |
+| DEGURBA | DEGree of URBAnization | More info [here](https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Applying_the_degree_of_urbanisation_manual_-_Extensions_to_level_1_of_the_classification#7.1.4_Classifying_small_spatial_units) |
+
+## License
+
+This module is made available under the **GPL-3.0** license.
+See the LICENSE file in this repository for the full text.
+
+## Contact
+
+Questions/maintainer:
+- Inocencio Gujamo - MIREME-UIPCE (inocencio.gujamo@gmail.com)
+- Imaculada Dos Santos - MIREME-UIPCE (imaculadamz@gmail.com)
+
+Developed by: 
+- Babak Khavari - SEforALL (babak.khavari@seforall.org)
+- Alexandros Korkovelos - SEforALL (alexandros.korkovelos@seforall.org)
+- Andreas Sahlberg - SEforALL (andreas.sahlberg@seforall.org)
+
 
