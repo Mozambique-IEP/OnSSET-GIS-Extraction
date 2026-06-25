@@ -19,6 +19,7 @@ from rasterio.windows import from_bounds, Window
 import pyogrio
 import traceback
 from exactextract import exact_extract
+import scipy
 warnings.filterwarnings('ignore')
 
 root = tk.Tk()
@@ -26,10 +27,11 @@ root.withdraw()
 root.attributes("-topmost", True)
 
 
-def zonal_stats_exact(name, gdf, method='sum', raster_path=''):
+def zonal_stats_exact(name, gdf, method='sum', raster_path='', init_dir=''):
     if raster_path == '':
         messagebox.showinfo('OnSSET', 'Select the {} map'.format(name))
-        raster_path = filedialog.askopenfilename(filetypes=(("rasters", "*.tif"), ("all files", "*.*")))
+        raster_path = filedialog.askopenfilename(initialdir=init_dir,
+                                                 filetypes=(("rasters", "*.tif"), ("all files", "*.*")))
 
     try:
         gdf.sort_values(by=['id'], inplace=True)
@@ -52,12 +54,16 @@ def zonal_stats_exact(name, gdf, method='sum', raster_path=''):
         return [], []
 
 
-def admin_1(name, admin, crs, workspace, clusters, admin_1_path='', admin_col_name=''):
+def admin_1(clusters, admin_1_path='', admin_col_name='', init_dir=''):
     try:
         if admin_1_path == '':
             messagebox.showinfo('OnSSET', 'Select the admin 1 boundaries')
-            admin_1_path = filedialog.askopenfilename(
-                filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", "*parquet"]), ("all files", "*.*")))
+            admin_1_path = filedialog.askopenfilename(initialdir=init_dir,
+                filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", "*.parquet"]), ("all files", "*.*")))
+
+            if admin_1_path == '':
+                print(print('Could not process Admin 1 layer, it was not selected'))
+                return [], []
 
             try:
                 admin_1 = gpd.read_file(admin_1_path)
@@ -116,11 +122,15 @@ def preparing_for_vectors(workspace, clusters, crs):
     return clusters
 
 
-def processing_lines(name, admin, crs, workspace, clusters, lines_path=''):
+def processing_lines(name, admin, crs, workspace, clusters, lines_path='', init_dir=''):
     if lines_path == '':
         messagebox.showinfo('OnSSET', 'Select the {} data'.format(name))
-        lines_path = filedialog.askopenfilename(
+        lines_path = filedialog.askopenfilename(initialdir=init_dir,
             filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", "*.parquet"]), ("all files", "*.*")))
+
+        if lines_path == '':
+            print('Could not process ' + '{}'.format(name) + ', layer was not selected or not in the correct format')
+            return [], []
 
     try:
         try:
@@ -228,11 +238,16 @@ def processing_lines(name, admin, crs, workspace, clusters, lines_path=''):
         return [], []
 
 
-def processing_points(name, admin, crs, workspace, clusters, mg_filter, points_path=''):
+def processing_points(name, admin, crs, workspace, clusters, mg_filter, points_path='', init_dir=''):
     if points_path == '':
         messagebox.showinfo('OnSSET', 'Select the {} data'.format(name))
-        points_path = filedialog.askopenfilename(
-            filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", "*.parquet"]), ("all files", "*.*")))
+        points_path = filedialog.askopenfilename(initialdir=init_dir,
+                                                 filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", "*.parquet"]),
+                                                            ("all files", "*.*")))
+
+        if points_path == '':
+            print('Could not process ' + '{}'.format(name) + ', layer was not selected or not in the correct format')
+            return [], []
 
     try:
         try:
@@ -331,7 +346,7 @@ def processing_points(name, admin, crs, workspace, clusters, mg_filter, points_p
                 pass  # File might not exist; skip it
 
         return clusters_2, points_path
-    except fiona.errors.DriverError as e:
+    except fiona.errors.DriverError:
         print('Could not process ' + '{}'.format(name) + ', layer was not selected or not in the correct format')
         return [], []
     except pyogrio.errors.DataSourceError:
@@ -428,12 +443,17 @@ def processing_hydro(admin, crs, workspace, clusters, points, hydropowervalue,
     return clusters_2
 
 
-def hydro(admin, crs, workspace, clusters):
+def hydro(admin, crs, workspace, clusters, init_dir=''):
     try:
         messagebox.showinfo('OnSSET', 'Select the Hydropower data')
-        hydro_path = filedialog.askopenfilename(title="Select Hydro map",
+        hydro_path = filedialog.askopenfilename(initialdir=init_dir,
+                                                title="Select Hydro map",
                                                 filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", "*.parquet"]),
                                                            ("all files", "*.*")))
+        if hydro_path == '':
+            print('Could not process Hydro points, layer was not selected')
+            return [], []
+
         try:
             hydro = gpd.read_file(hydro_path)
         except:
@@ -739,9 +759,10 @@ def dropdown_popup(options):
     return selected_value
 
 
-def select_pop_clusters():
+def select_pop_clusters(init_dir):
     messagebox.showinfo('OnSSET', 'Select the clusters')
-    file = filedialog.askopenfilename(filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", ".parquet"]), ("all files", "*.*")))
+    file = filedialog.askopenfilename(initialdir=init_dir,
+        filetypes=(("vector", ["*.shp", "*.gpkg", "*.geojson", ".parquet"]), ("all files", "*.*")))
 
     try:
         clusters = gpd.read_file(file)
@@ -753,5 +774,5 @@ def select_pop_clusters():
     x = dropdown_popup(options)
     print('Population column: ' + x)
 
-    return x, clusters, file 
+    return x, clusters, file
 
