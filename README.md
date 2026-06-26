@@ -18,15 +18,29 @@ conda env create --name moz_onsset_env --file moz_onsset_env.yml
 2. Install the required packages (see installation instructions using Anaconda above)
 3. Activate the environment in Anaconda prompt (*conda activate moz_onsset_env*)
 4. Launch Jupyter Notebook (*jupyter notebook* in Anaconda Prompt)
-5. Open *notebooks/clustering.ipynb* and follow the instructions inside
-6. Outputs will be written to data/outputs
+5. Open the *notebooks* folder
+6. Chooese either the *csv_file_preparation_stepBystep_code.ipynb* (recommended for first-time users) or *csv_file_preparation_bulk_code.ipynb* and follow the instructions inside
+7. Outputs will be written to data/outputs
 
 ## Input data
 
 | Dataset | Target location | Description | SDI Location | Alternative location |
 |---------|-----------------|-------------|--------------|----|
-| Population raster | data/iputs/pop | 100 m population counts in raster format (e.g. .tif) | /datasets/rasterfile/13 | https://wopr.worldpop.org/?MOZ/Population/ (*Gridded population estimates (~100m) for Mozambique* version 2.0)|
-| Administrative boundaries | data/inputs/admin_boundaries | Administrative boundaries of Mozambique in polygon format | /datasets/vectorfile/46 | - | 
+| Administrative boundaries | data/inputs/AdminBoundaries | Administrative boundaries of Mozambique in polygon format - including province level | /datasets/vectorfile/46 | - |
+| Settlement clusters | data/inputs/Clusters | Population settlement clusters |  | - |
+| Distribution transformers | data/inputs/DistributionTransformers | Existing distribution transformers (MV/LV) |  | - |
+| Existing HV lines | data/inputs/HV_Existing | Existing HV lines |  | - |
+| Planned HV lines | data/inputs/HV_Planned | Planned HV lines |  |  |
+| Hydro potential | data/inputs/HydroPotential | Potential sites for small- and mini hydro sites for run-of-river mini-grids |  | https://energydata.info/dataset/small-and-mini-hydropower-potential-in-sub-saharan-africa |
+| Existing mini-grids | data/inputs/MiniGrids | Existing mini-grid locations |  | - |
+| Existing MV lines | data/inputs/MV_Existing | Existing MV lines |  | - |
+| Planned MV lines | data/inputs/Planned | Planned MV lines (already committed) |  | - |
+| Night-time lights | data/inputs/NightTimeLights | Night-time lights |  | https://eogdata.mines.edu/products/vnl/ (*median-masked version 2.2*) |
+| Roads | data/inputs/Roads | Main road network "trans estradas" |  | - |
+| Solar GHI | data/inputs/SolarGHI | Solar resource - Annual Global Horizontal Irradiation |  | https://globalsolaratlas.info/download/mozambique (*Gis data - LTAym_YearlyMonthlyTotals (GeoTIFF)*) |
+| Substations | data/inputs/Substations | Existing power substations |  | - |
+| Travel time to major cities | data/inputs/TravelTime | Travel time to nearest city with >50,000 population |  | https://data.malariaatlas.org/maps (*Global Travel Time to Cities*) |
+| Wind speed | WindVelocity | Annual average wind speed (m/s) |  | https://globalwindatlas.info/api/gis/country/MOZ/wind-speed/50 (*Mozambique > WIND_SPEED > 50*) |
 
 ## Output data
 
