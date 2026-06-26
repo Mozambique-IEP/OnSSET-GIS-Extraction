@@ -21,6 +21,7 @@ conda env create --name moz_onsset_env --file moz_onsset_env.yml
 5. Open the *notebooks* folder
 6. Chooese either the *csv_file_preparation_stepBystep_code.ipynb* (recommended for first-time users) or *csv_file_preparation_bulk_code.ipynb* and follow the instructions inside
 7. Outputs will be written to data/outputs
+8. Check that data in the output csv file match with expected values as described in **Output data** below
 
 ## Input data
 
@@ -44,15 +45,39 @@ conda env create --name moz_onsset_env --file moz_onsset_env.yml
 
 ## Output data
 
-Output data is a vector file of settlement polygons including population estimates, saved as a geoparquet (*clusters.parquet*) in data/outputs:
+Output data is a file with extracted GIS data for every settlement, saved as a csv (*OnSSET_InputFile.csv*) in data/outputs:
 
-| Column | Description | Units |
-| - | - | - |
-| id | Unique id of each settlement | - |
-| Country | Name of the country | - |
-| Area | Area of each settlement | Sq. km |
-| Population | Estimated population in each settlement | People |
-| DEGURBA | DEGree of URBAnization | More info [here](https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Applying_the_degree_of_urbanisation_manual_-_Extensions_to_level_1_of_the_classification#7.1.4_Classifying_small_spatial_units) |
+| Column | Type | Unit | Description |
+|---------|-----------------|-------------|--------------|
+| Country |	String |	-	| Name of the country |
+| Admin_1 |	String |	- |	Admin level 1 (state/region/province) name |
+| X_deg |	Float |	degrees |	Longitude (a value between -180 and 180) |
+| Y_deg |	Float |	degrees |	Latitude (a value between -180 and 180) |
+| GridCellArea |	Float |	sq. km	| Area of population settlement (most settlements <1, can go as high as 1,000-2,000 for the largest settlements) |
+| Id |	Integer |	indicator |	ID given to each cluster |
+| Pop |	Float |	people |	Population in each cluster for the start year as given by the GIS dataset |
+| NightLights |	Integer |	nW cm−2 sr−1 |	Values of light intensity (usually in the range of 0-200) |
+| GHI |	Float |	kWh/km^2 |	Solar irradiation (usually in the range of 1,500 – 2,500) |
+| Windwel |	Float |	m/s |	Average annual wind speed (usually in the range of 0-10) |
+| Travelhours |	Float |	hours |	Time in hours to travel to nearest town of more than 50,000 people (usually in the range of 0-50) |
+| SubstationDist |	Float |	km |	Distance to nearest substation (usually in the range of 0-300) |
+| RoadDist |	Float |	km |	Distance to nearest road (usually in the range of 0-100) |
+| CurrentMVLineDist |	Float |	km |	Distance to nearest existing MV line (usually in the range of 0-300) |
+| PlannedMVLineDist |	Float |	km |	Distance to nearest existing or planned MV line (usually in the range of 0-300) |
+| CurrentHVLineDist |	Float |	km |	Distance to nearest current HV line (usually in the range of 0-300) |
+| PlannedHVLineDist |	Float |	km |	Distance to nearest existing or planned HV line (usually in the range of 0-300) |
+| HydropowerFID |	Integer |	indicator |	ID of nearest potential hydropower site |
+| Hydropower |	Float |	kW |	Small scale hydropower potential of nearest site (usually in the range of 0-10,000) |
+| HydropowerDist |	Float |	km |	Distance to nearest potential hydropower site (usually in the range of 0-300) |
+| TransformerDist |	Float |	km |	Distance to nearest service transformer (MV/LV) (usually in the range of 0-300) |
+| IsUrban |	Integer |	0 for rural 2 for urban |	Urban/rural split gets assigned in the calibration algorithm (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| ResidentialDemandTierCustom |	Float |	kWh/household/year |	Indicative residential electricity demand target (expected to be 0 or in the range of 0-3000) |
+| PerHouseholdDemand |	Float |	kWh/household/year |	Indicative residential electricity demand target (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| HealthDemand |	Float |	kWh/year |	Indicative electricity demand for health facilities (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| EducationDemand |	Float |	kWh/year |	Indicative electricity demand for educational facilities (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| AgriDemand |	Float |	kWh/year |	Indicative electricity demand for agricultural processes (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| CommercialDemand |	Float |	kWh/year |	Indicative electricity demand target for commercial activity (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| ElecPop |	Float |	people |	Placeholder, will be used for information about estimated population that already has access to electricity in the start of the analysis. (expected to be 0 after extraction unless any information was provided in the clusters already) |
 
 ## License
 
