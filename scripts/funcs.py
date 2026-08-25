@@ -358,6 +358,287 @@ def processing_points(name, admin, crs, workspace, clusters, mg_filter, points_p
         print(e)
         return [], []
 
+def count_facilities(name, admin, crs, workspace, clusters, mg_filter,
+                      points_path='', init_dir=''):
+    if points_path == '':
+        messagebox.showinfo('OnSSET', 'Select the {} data'.format(name))
+        points_path = filedialog.askopenfilename(
+            initialdir=init_dir,
+            filetypes=(
+                ("vector", ["*.shp", "*.gpkg", "*.geojson", "*.parquet"]),
+                ("all files", "*.*")
+            )
+        )
+
+        if points_path == '':
+            print(
+                'Could not process ' + '{}'.format(name) +
+                ', layer was not selected or not in the correct format'
+            )
+            return [], []
+
+    try:
+        # ---------------------------------------------------------
+        # Read points
+        # ---------------------------------------------------------
+        try:
+            points = gpd.read_file(points_path)
+        except:
+            points = gpd.read_parquet(points_path)
+
+        if mg_filter:
+            points['umgid'] = range(0, len(points))
+            points_post = points.copy()
+
+        # ---------------------------------------------------------
+        # Clip points to admin area and project
+        # ---------------------------------------------------------
+        points_clip = gpd.clip(points, admin)
+        points_proj = points_clip.to_crs(crs).copy()
+
+        # Explode multipart geometries
+        points_proj = points_proj.explode(
+            index_parts=False
+        ).reset_index(drop=True)
+
+        if points_proj.empty:
+            print(
+                "Warning: No features found within the admin boundary. "
+                "Ensure both datasets are in the correct CRS and contain data."
+            )
+            return [], []
+
+        # ---------------------------------------------------------
+        # Prepare clusters
+        # ---------------------------------------------------------
+        clusters_2 = clusters.copy()
+
+        if clusters_2.crs != points_proj.crs:
+            clusters_2 = clusters_2.to_crs(points_proj.crs)
+
+        # Make sure id is available and sortable for tie-breaking
+        if 'id' not in clusters_2.columns:
+            raise ValueError(
+                "The clusters layer must contain an 'id' column."
+            )
+
+        # ---------------------------------------------------------
+        # Give every point a unique internal ID.
+        #
+        # This is important because the original index may not be
+        # unique after clipping/exploding.
+        # ---------------------------------------------------------
+        points_proj['_point_id'] = range(len(points_proj))
+
+        # ---------------------------------------------------------
+        # Find all clusters within 3000 m of each point.
+        #
+        # Using sjoin with 'dwithin' rather than sjoin_nearest
+        # allows us to explicitly control ties.
+        # ---------------------------------------------------------
+        try:
+            candidates = gpd.sjoin(
+                points_proj,
+                clusters_2[['id', 'geometry']],
+                how='inner',
+                predicate='dwithin',
+                distance=3000
+            )
+        except TypeError:
+            # Fallback for older GeoPandas versions without
+            # the distance argument for dwithin.
+            candidates = gpd.sjoin(
+                points_proj,
+                clusters_2[['id', 'geometry']],
+                how='inner',
+                predicate='intersects'
+            )
+
+            # If dwithin is unavailable, explicitly find nearby
+            # clusters using distances.
+            if candidates.empty:
+                candidates = points_proj.iloc[0:0].copy()
+
+        # ---------------------------------------------------------
+        # Calculate the actual distance from each point to its
+        # candidate cluster.
+        #
+        # The spatial join may have produced multiple candidates
+        # for a point.
+        # ---------------------------------------------------------
+        if not candidates.empty:
+
+            # The geometry after sjoin is the POINT geometry.
+            # Get the corresponding cluster geometry.
+            cluster_geom = clusters_2[['id', 'geometry']].rename(
+                columns={'geometry': '_cluster_geometry'}
+            )
+
+            candidates = candidates.merge(
+                cluster_geom,
+                on='id',
+                how='left'
+            )
+
+            candidates['_distance'] = candidates.geometry.distance(
+                candidates['_cluster_geometry']
+            )
+
+            # -----------------------------------------------------
+            # Tie-breaking:
+            #
+            # 1. Sort by point
+            # 2. Sort by actual distance
+            # 3. Sort by cluster ID
+            #
+            # Therefore, the closest cluster wins. If two or more
+            # clusters are exactly equally close, the cluster with
+            # the smallest ID wins.
+            # -----------------------------------------------------
+            candidates = candidates.sort_values(
+                by=['_point_id', '_distance', 'id'],
+                ascending=[True, True, True]
+            )
+
+            # Keep exactly ONE cluster per point
+            assignments = candidates.drop_duplicates(
+                subset='_point_id',
+                keep='first'
+            ).copy()
+
+        else:
+            # No points are within 3000 m of a cluster
+            assignments = points_proj.iloc[0:0].copy()
+            assignments['_distance'] = pd.Series(
+                dtype=float,
+                index=assignments.index
+            )
+
+        # ---------------------------------------------------------
+        # Always count ALL assigned points first
+        # ---------------------------------------------------------
+        counts_total = (
+            assignments
+            .groupby('id')
+            .size()
+            .rename(name)
+        )
+        
+        clusters_2 = clusters_2.merge(
+            counts_total,
+            left_on='id',
+            right_index=True,
+            how='left'
+        )
+        
+        clusters_2[name] = (
+            clusters_2[name]
+            .fillna(0)
+            .astype(int)
+        )
+
+
+        # ---------------------------------------------------------
+        # If Category exists, additionally count each category
+        # ---------------------------------------------------------
+        if 'Category' in points_proj.columns:
+        
+            categories = points_proj['Category'].dropna().unique()
+        
+            for category in categories:
+        
+                column_name = name + '_' + str(category)
+        
+                counts = (
+                    assignments[
+                        assignments['Category'] == category
+                    ]
+                    .groupby('id')
+                    .size()
+                    .rename(column_name)
+                )
+        
+                clusters_2 = clusters_2.merge(
+                    counts,
+                    left_on='id',
+                    right_index=True,
+                    how='left'
+                )
+        
+                clusters_2[column_name] = (
+                    clusters_2[column_name]
+                    .fillna(0)
+                    .astype(int)
+                )
+
+        # ---------------------------------------------------------
+        # Preserve existing mg_filter behaviour
+        # ---------------------------------------------------------
+        if mg_filter:
+            cols = points_post.columns.tolist()
+
+            try:
+                cols.remove('id')
+            except ValueError:
+                pass
+
+            try:
+                cols.remove('geometry')
+            except ValueError:
+                pass
+
+            try:
+                clusters_2 = pd.merge(
+                    clusters_2,
+                    points_post[['umgid', 'name']],
+                    on='umgid',
+                    how='left'
+                )
+            except:
+                clusters_2 = pd.merge(
+                    clusters_2,
+                    points_post[['umgid']],
+                    on='umgid',
+                    how='left'
+                )
+
+        # ---------------------------------------------------------
+        # Remove duplicates and temporary columns
+        # ---------------------------------------------------------
+        clusters_2.drop_duplicates(
+            subset="id",
+            keep="first",
+            inplace=True
+        )
+
+        print(
+            'Processing finished:',
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        return clusters_2, points_path
+
+    except fiona.errors.DriverError:
+        print(
+            'Could not process ' + '{}'.format(name) +
+            ', layer was not selected or not in the correct format'
+        )
+        return [], []
+
+    except pyogrio.errors.DataSourceError:
+        print(
+            'Could not process ' + '{}'.format(name) +
+            ', layer was not selected or not in the correct format'
+        )
+        return [], []
+
+    except ValueError as e:
+        print(
+            'Could not process ' + '{}'.format(name) +
+            '. Check the coordinate system and that there is data in the study area'
+        )
+        print(e)
+        return [], []
 
 def processing_hydro(admin, crs, workspace, clusters, points, hydropowervalue,
                      hydropowerunit):
