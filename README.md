@@ -42,6 +42,8 @@ conda env create --name moz_onsset_env --file moz_onsset_env.yml
 | Substations | data/inputs/Substations | Existing power substations |  | - |
 | Travel time to major cities | data/inputs/TravelTime | Travel time to nearest city with >50,000 population |  | https://data.malariaatlas.org/maps (*Global Travel Time to Cities*) |
 | Wind speed | WindVelocity | Annual average wind speed (m/s) |  | https://globalwindatlas.info/api/gis/country/MOZ/wind-speed/50 (*Mozambique > WIND_SPEED > 50*) |
+| Schools | data/inputs/Schools | Existing schools |  | - |
+| Health Facilities | data/inputs/HealthFacilities | Existing health facilities |  | - |
 
 ## Output data
 
@@ -78,6 +80,10 @@ Output data is a file with extracted GIS data for every settlement, saved as a c
 | AgriDemand |	Float |	kWh/year |	Indicative electricity demand for agricultural processes (expected to be 0 after extraction unless any information was provided in the clusters already) |
 | CommercialDemand |	Float |	kWh/year |	Indicative electricity demand target for commercial activity (expected to be 0 after extraction unless any information was provided in the clusters already) |
 | ElecPop |	Float |	people |	Placeholder, will be used for information about estimated population that already has access to electricity in the start of the analysis. (expected to be 0 after extraction unless any information was provided in the clusters already) |
+| Schools |	Integer |	# of facilities |	Count of schools in settlement (schools are assigned to closest settlement - at a maximum distance of 3 km) |
+| Schools_*XX* |	Integer |	# of facilities |	Count of schools by specific school type (e.g. primary, secondary, etc.) in settlement (schools are assigned to closest settlement - at a maximum distance of 3 km) |
+| Health facilities |	Integer |	# of facilities |	Count of health facilities in settlement (health facilities are assigned to closest settlement - at a maximum distance of 3 km) |
+| HealthFacilities_*XX* |	Integer |	# of facilities |	Count of health facilities by specific type (e.g. health post, health centre, hospital, etc.) in settlement (health facilities are assigned to closest settlement - at a maximum distance of 3 km) |
 
 ## License
 
