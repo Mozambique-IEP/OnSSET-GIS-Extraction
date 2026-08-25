@@ -28,7 +28,7 @@ conda env create --name moz_onsset_env --file moz_onsset_env.yml
 | Dataset | Target location | Description | SDI Location | Alternative location |
 |---------|-----------------|-------------|--------------|----|
 | Administrative boundaries | data/inputs/AdminBoundaries | Administrative boundaries of Mozambique in polygon format - including province level | /datasets/vectorfile/46 | - |
-| Settlement clusters | data/inputs/Clusters | Population settlement clusters | https://piem.mireme.gov.mz/en/admin/datasets/vectorfile/3 | - |
+| Settlement clusters | data/inputs/Clusters | Population settlement clusters | https://piem.mireme.gov.mz/en/admin/datasets/vectorfile/3/ | - |
 | Distribution transformers | data/inputs/DistributionTransformers | Existing distribution transformers (MV/LV) | Vector Files > Distribution Transformers | - |
 | Existing HV lines | data/inputs/HV_Existing | Existing HV lines |  | - |
 | Planned HV lines | data/inputs/HV_Planned | Planned HV lines |  |  |
